@@ -1,5 +1,7 @@
 <?php
 
+// Written at Louisiana State University
+
 class block_admin_email extends block_list {
     function init() {
         $this->title = get_string('pluginname', 'block_admin_email');

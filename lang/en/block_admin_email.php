@@ -1,5 +1,7 @@
 <?php
 
+// Written at Louisiana State University
+
 $string['pluginname'] = 'Administrative Email';
 $string['send_email'] = 'Send Email';
 $string['subject'] = 'Subject';
