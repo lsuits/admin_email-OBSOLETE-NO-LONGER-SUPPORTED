@@ -126,4 +126,3 @@ if(!empty($users)) {
 echo $paging_bar;
 
 echo $OUTPUT->footer();
-
