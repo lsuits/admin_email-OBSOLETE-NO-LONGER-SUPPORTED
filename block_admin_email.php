@@ -10,7 +10,7 @@ class block_admin_email extends block_list {
     }
 
     function get_content() {
-        global $USER;
+        global $OUTPUT, $USER;
 
         if($this->content !== NULL) {
             return $this->content;
@@ -29,6 +29,8 @@ class block_admin_email extends block_list {
         $send_email_href = new moodle_url('/blocks/admin_email/');
         $send_email = html_writer::link($send_email_href, $send_email_str);
         $this->content->items[] = $send_email;
+
+        $this->content->icons[] = $OUTPUT->pix_icon('i/email', $send_email_str);
 
         return $this->content;
     }
