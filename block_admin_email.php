@@ -18,7 +18,8 @@ class block_admin_email extends block_list {
             return $this->content;
         }
 
-        if(!is_siteadmin($USER->id)) {
+        $context = get_context_instance(CONTEXT_SYSTEM);
+        if(!is_siteadmin($USER->id) or has_capability('moodle/site:sendmessage',$context, $USER->id, false)) {
             return $this->content;
         }
 
