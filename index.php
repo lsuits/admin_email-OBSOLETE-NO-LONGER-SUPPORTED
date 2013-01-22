@@ -52,7 +52,7 @@ if ($form->is_cancelled()) {
     unset($SESSION->user_filtering);
     redirect(new moodle_url('/blocks/admin_email/'));
 } else if ($data = $form->get_data()) {
-
+    $sent = 0;
     $warnings = array();
 
     $subject = $data->subject;
@@ -63,12 +63,15 @@ if ($form->is_cancelled()) {
             true, $data->noreply, $blockname);
         if(!$success)
             $warnings[] = get_string('email_error', 'block_admin_email', $user);
+        else{
+            $sent++;
+        }
     }
 
     // Finished processing
     // Empty errors mean that you can go back home
-    if(empty($warnings))
-        redirect(new moodle_url('/'));
+//    if(empty($warnings))
+        //redirect(new moodle_url('/'));
 }
 
 echo $OUTPUT->header();
@@ -81,6 +84,8 @@ if(!empty($warnings)) {
     }
 }
 
+echo $OUTPUT->notification(sprintf("Successfully sent %d emails...", $sent));
+//die();
 // Start work
 $ufiltering->display_add();
 $ufiltering->display_active();
