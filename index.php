@@ -41,9 +41,13 @@ $usersearchcount = get_users(false, '', true, null, '', '', '', '', '',
 
 if(empty($sort)) $sort = 'lastname';
 
-$users = empty($sql) ? array() :
+$display_users = empty($sql) ? array() :
     get_users_listing($sort, $direction, $page*$perpage, 
     $perpage, '', '', '', $sql, $params);
+
+$users = empty($sql) ? array() :
+    get_users_listing($sort, $direction, 0, 
+    0, '', '', '', $sql, $params);
 
 $form = new email_form();
 
@@ -112,7 +116,7 @@ if(!empty($sql)) {
 
 echo $paging_bar;
 
-if(!empty($users)) {
+if(!empty($display_users)) {
     $columns = array('firstname', 'lastname', 'email', 'city', 'lastaccess');
     foreach($columns as $column) {
         $direction = ($sort == $column and $direction == "ASC") ? "DESC" : "ASC";
@@ -129,7 +133,7 @@ if(!empty($users)) {
         $lastaccess_time = isset($user->lastaccess) ? 
             format_time(time() - $user->lastaccess) : get_string('never');
         return array($fullname, $email, $city, $lastaccess_time);
-    }, $users);
+    }, $display_users);
     echo html_writer::table($table);
     $form->set_data(array('noreply' => $CFG->noreplyaddress));
     echo $form->display();
