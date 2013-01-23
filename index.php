@@ -58,14 +58,26 @@ if ($form->is_cancelled()) {
     $subject = $data->subject;
     $text = strip_tags($data->body['text']);
     $html = $data->body['text'];
+    $sent = array();
+    
     foreach($users as $user) {
         $success = email_to_user($user, $USER, $subject, $text, $html, '', '', 
             true, $data->noreply, $blockname);
         if(!$success)
             $warnings[] = get_string('email_error', 'block_admin_email', $user);
+        else{
+            $sent[] = $user->id;
+        }
     }
-
+    
     // Finished processing
+    // save a record in the DB
+    $data->userid = $USER->id;
+    $data->mailto = implode(',', $sent);
+    $data->subject = $subject;
+    $data->message = $text;
+    $data->time    = time();
+    $data->id = $DB->insert_record('block_admin_email_log', $data);
     // Empty errors mean that you can go back home
     if(empty($warnings))
         redirect(new moodle_url('/'));
