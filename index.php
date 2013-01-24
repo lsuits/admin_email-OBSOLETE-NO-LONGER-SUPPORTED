@@ -9,6 +9,7 @@ require_once "$CFG->dirroot/user/filters/lib.php";
 require_once 'email_form.php';
 
 require_login();
+global $DB;
 
 $page = optional_param('page', 0, PARAM_INT);
 $perpage = optional_param('perpage', 20, PARAM_INT);
@@ -26,7 +27,7 @@ $PAGE->navbar->add($blockname);
 $PAGE->navbar->add($header);
 $PAGE->set_heading($SITE->shortname.': '.$blockname);
 
-// Get Oour users
+// Get Our users
 $fields = array(
     'courserole' => 0,
     'systemrole' => 0,
@@ -139,6 +140,22 @@ if(!empty($display_users)) {
     echo $form->display();
 }
 
+//display a table of previous email messages
+$history = new html_table();
+
+$history->head = array('id', 'User', '# Recipients', 'Subject', 'Message', 'Time');
+//hard-code limit to 50 records
+//@TODO let this be a paged table of results
+$historic_records = $DB->get_records_sql('SELECT * FROM {block_admin_email_log} ORDER BY time DESC', null, 0, 50);
+$history->data = array_map(function($record){
+    global $DB;
+    $id = html_writer::link('item_detail.php?id='.$record->id, $record->id);
+    $sender = $DB->get_record('user', array('id' => $record->userid));
+    $message = strlen($record->message) >80 ? substr($record->message, 0, 80).'...' : $record->message;
+    return array($id, $sender->username, count(explode(',',$record->mailto)), $record->subject, $message, strftime('%F %T',$record->time));
+},$historic_records);
+
+echo html_writer::table($history);
 echo $paging_bar;
 
 echo $OUTPUT->footer();
