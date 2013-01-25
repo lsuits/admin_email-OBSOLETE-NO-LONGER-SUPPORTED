@@ -18,7 +18,9 @@ class block_admin_email extends block_list {
             return $this->content;
         }
 
-        if(!is_siteadmin($USER->id)) {
+        $context = get_context_instance(CONTEXT_SYSTEM);
+
+        if(!is_siteadmin($USER->id) and !has_capability('block/admin_email:send_email',$context, $USER->id, false)) {
             return $this->content;
         }
 
@@ -27,10 +29,7 @@ class block_admin_email extends block_list {
         $this->content->icons = array();
         $this->content->footer = '';
 
-        $send_email_str = get_string('send_email', 'block_admin_email');
-        $send_email_href = new moodle_url('/blocks/admin_email/');
-        $send_email = html_writer::link($send_email_href, $send_email_str);
-        $this->content->items[] = $send_email;
+        $this->content->items[] = html_writer::link(new moodle_url('/blocks/admin_email/'), get_string('send_email', 'block_admin_email'));
 
         $this->content->icons[] =
             $OUTPUT->pix_icon('i/email', $send_email_str,
