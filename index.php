@@ -26,6 +26,7 @@ $PAGE->set_url('/blocks/admin_email/');
 $PAGE->navbar->add($blockname);
 $PAGE->navbar->add($header);
 $PAGE->set_heading($SITE->shortname.': '.$blockname);
+$PAGE->set_pagelayout('admin');
 
 // Get Our users
 $fields = array(
@@ -36,19 +37,17 @@ $fields = array(
 );
 $ufiltering = new user_filtering($fields);
 list($sql, $params) = $ufiltering->get_sql_filter();
-$usercount = get_users(false); 
+
 $usersearchcount = get_users(false, '', true, null, '', '', '', '', '', 
                 '*', $sql, $params);
 
 if(empty($sort)) $sort = 'lastname';
 
-$display_users = empty($sql) ? array() :
-    get_users_listing($sort, $direction, $page*$perpage, 
-    $perpage, '', '', '', $sql, $params);
-
 $users = empty($sql) ? array() :
     get_users_listing($sort, $direction, 0, 
     0, '', '', '', $sql, $params);
+
+$paged_users = array_chunk($users, $perpage, true);
 
 $form = new email_form();
 
@@ -60,29 +59,26 @@ if ($form->is_cancelled()) {
 
     $warnings = array();
 
-    $subject = $data->subject;
-    $text = strip_tags($data->body['text']);
-    $html = $data->body['text'];
-    $sent = array();
+    $record = new stdClass();
+    $record->subject = $data->subject;
+    $record->text = strip_tags($data->body['text']);
+    $record->html = $data->body['text'];
+    $record->sender = $USER->id;
+    $record->sent = array();
     
     foreach($users as $user) {
-        $success = email_to_user($user, $USER, $subject, $text, $html, '', '', 
+        $success = email_to_user($user, $USER, $record->subject, $record->text, $record->html, '', '', 
             true, $data->noreply, $blockname);
         if(!$success)
             $warnings[] = get_string('email_error', 'block_admin_email', $user);
         else{
-            $sent[] = $user->id;
+            $record->sent[] = $user->id;
         }
     }
     
-    // Finished processing
-    // save a record in the DB
-    $data->userid = $USER->id;
-    $data->mailto = implode(',', $sent);
-    $data->subject = $subject;
-    $data->message = $text;
-    $data->time    = time();
-    $data->id = $DB->insert_record('block_admin_email_log', $data);
+    //save a record for later
+    admin_email_util::log($record);
+    
     // Empty errors mean that you can go back home
     if(empty($warnings))
         redirect(new moodle_url('/'));
@@ -117,7 +113,7 @@ if(!empty($sql)) {
 
 echo $paging_bar;
 
-if(!empty($display_users)) {
+if(!empty($paged_users[$page])) {
     $columns = array('firstname', 'lastname', 'email', 'city', 'lastaccess');
     foreach($columns as $column) {
         $direction = ($sort == $column and $direction == "ASC") ? "DESC" : "ASC";
@@ -134,28 +130,49 @@ if(!empty($display_users)) {
         $lastaccess_time = isset($user->lastaccess) ? 
             format_time(time() - $user->lastaccess) : get_string('never');
         return array($fullname, $email, $city, $lastaccess_time);
-    }, $display_users);
+    }, $paged_users[$page]);
     echo html_writer::table($table);
     $form->set_data(array('noreply' => $CFG->noreplyaddress));
     echo $form->display();
 }
 
-//display a table of previous email messages
-$history = new html_table();
-
-$history->head = array('id', 'User', '# Recipients', 'Subject', 'Message', 'Time');
-//hard-code limit to 50 records
-//@TODO let this be a paged table of results
-$historic_records = $DB->get_records_sql('SELECT * FROM {block_admin_email_log} ORDER BY time DESC', null, 0, 50);
-$history->data = array_map(function($record){
-    global $DB;
-    $id = html_writer::link('item_detail.php?id='.$record->id, $record->id);
-    $sender = $DB->get_record('user', array('id' => $record->userid));
-    $message = strlen($record->message) >80 ? substr($record->message, 0, 80).'...' : $record->message;
-    return array($id, $sender->username, count(explode(',',$record->mailto)), $record->subject, $message, strftime('%F %T',$record->time));
-},$historic_records);
-
-echo html_writer::table($history);
+echo admin_email_util::history_table();
 echo $paging_bar;
 
 echo $OUTPUT->footer();
+
+class admin_email_util{
+    public static function log($record){
+        global $DB;
+        // Finished processing
+        // save a record in the DB
+        $r = new stdClass();
+        $r->userid  = $record->sender;
+        $r->mailto  = implode(',', $record->sent);
+        $r->subject = $record->subject;
+        $r->message = $record->text;
+        $r->time    = time();
+        //insert
+        $r->id      = $DB->insert_record('block_admin_email_log', $r);
+    }
+
+    public static function history_table(){
+        global $DB;
+        //display a table of previous email messages
+        $history = new html_table();
+        $history->head = array('id', 'User', '# Recipients', 'Subject', 'Message', 'Time');
+
+        //hard-code limit to 50 records
+        //@TODO let this be a paged table of results
+        $historic_records = $DB->get_records_sql('SELECT * FROM {block_admin_email_log} ORDER BY time DESC', null, 0, 50);
+        $history->data = array_map(function($record){
+            global $DB;
+            $id = html_writer::link('item_detail.php?id='.$record->id, $record->id);
+            $sender = $DB->get_record('user', array('id' => $record->userid));
+            $message = strlen($record->message) >80 ? substr($record->message, 0, 80).'...' : $record->message;
+            return array($id, $sender->username, count(explode(',',$record->mailto)), $record->subject, $message, strftime('%F %T',$record->time));
+        },$historic_records);
+
+        return html_writer::table($history);
+    }
+}
