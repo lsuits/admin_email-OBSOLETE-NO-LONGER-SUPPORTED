@@ -5,12 +5,16 @@
 require_once $CFG->libdir . '/formslib.php';
 
 class email_form extends moodleform {
-    public function definition() {
+    function definition() {
         global $CFG;
 
         $mform =& $this->_form;
         $mform->addElement('text', 'subject', get_string('subject', 'block_admin_email'));
+        $mform->setType('subject', PARAM_TEXT);
+        
         $mform->addElement('text', 'noreply', get_string('noreply', 'block_admin_email'));
+        $mform->setType('noreply', PARAM_TEXT);
+        
         $mform->addElement('editor', 'body',  get_string('body', 'block_admin_email'));
 
         $buttons = array(
@@ -24,7 +28,7 @@ class email_form extends moodleform {
         $mform->addRule('body', null, 'required');
     }
 
-    function validation($data) {
+    function validation($data, $files) {
         $errors = array();
         foreach(array('subject', 'body', 'noreply') as $field) {
             if(empty($data[$field]))
