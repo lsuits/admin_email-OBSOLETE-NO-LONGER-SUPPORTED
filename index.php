@@ -1,7 +1,7 @@
 <?php
 
 // Written at Louisiana State University
-
+global $CFG, $USER, $SESSION, $PAGE, $SITE;
 require_once '../../config.php';
 require_once "$CFG->dirroot/course/lib.php";
 require_once "$CFG->libdir/adminlib.php";
