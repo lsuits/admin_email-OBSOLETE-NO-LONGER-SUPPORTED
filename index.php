@@ -10,15 +10,15 @@ require_once 'email_form.php';
 
 require_login();
 
-$page = optional_param('page', 0, PARAM_INT);
-$perpage = optional_param('perpage', 20, PARAM_INT);
-$sort = optional_param('sort', '', PARAM_ACTION);
-$direction = optional_param('dir', 'ASC', PARAM_ACTION);
+$page       = optional_param('page', 0, PARAM_INT);
+$perpage    = optional_param('perpage', 20, PARAM_INT);
+$sort       = optional_param('sort', '', PARAM_ACTION);
+$direction  = optional_param('dir', 'ASC', PARAM_ACTION);
 
-$blockname = get_string('pluginname', 'block_admin_email');
-$header = get_string('send_email', 'block_admin_email');
+$blockname  = get_string('pluginname', 'block_admin_email');
+$header     = get_string('send_email', 'block_admin_email');
 
-$context = get_context_instance(CONTEXT_SYSTEM);
+$context    = get_context_instance(CONTEXT_SYSTEM);
 
 $PAGE->set_context($context);
 $PAGE->set_url('/blocks/admin_email/');
@@ -33,6 +33,7 @@ $fields = array(
     'realname' => 1,
     'username' => 1,
 );
+
 $ufiltering = new user_filtering($fields);
 list($sql, $params) = $ufiltering->get_sql_filter();
 $usercount = get_users(false); 
@@ -59,9 +60,9 @@ if ($form->is_cancelled()) {
 
     $warnings = array();
 
-    $subject = $data->subject;
-    $text = strip_tags($data->body['text']);
-    $html = $data->body['text'];
+    $subject  = $data->subject;
+    $text     = strip_tags($data->body['text']);
+    $html     = $data->body['text'];
     foreach($users as $user) {
         $success = email_to_user($user, $USER, $subject, $text, $html, '', '', 
             true, $data->noreply, $blockname);
