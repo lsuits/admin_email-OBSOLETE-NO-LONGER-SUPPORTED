@@ -1,11 +1,12 @@
 <?php
 
 // Written at Louisiana State University
-global $CFG, $USER, $SESSION, $PAGE, $SITE;
+global $CFG, $USER, $SESSION, $PAGE, $SITE, $OUTPUT;
 require_once '../../config.php';
 require_once "$CFG->dirroot/course/lib.php";
 require_once "$CFG->libdir/adminlib.php";
 require_once "$CFG->dirroot/user/filters/lib.php";
+require_once 'lib.php';
 require_once 'email_form.php';
 
 require_login();
@@ -58,21 +59,12 @@ if ($form->is_cancelled()) {
     redirect(new moodle_url('/blocks/admin_email/'));
 } else if ($data = $form->get_data()) {
 
-    $warnings = array();
-
-    $subject  = $data->subject;
-    $text     = strip_tags($data->body['text']);
-    $html     = $data->body['text'];
-    foreach($users as $user) {
-        $success = email_to_user($user, $USER, $subject, $text, $html, '', '', 
-            true, $data->noreply, $blockname);
-        if(!$success)
-            $warnings[] = get_string('email_error', 'block_admin_email', $user);
-    }
+    $message = new Message($data, $users);
+    $message->send();
 
     // Finished processing
     // Empty errors mean that you can go back home
-    if(empty($warnings))
+    if(empty($message->warnings))
         redirect(new moodle_url('/'));
 }
 
@@ -80,8 +72,8 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading($header);
 
 // Notify the admin.
-if(!empty($warnings)) {
-    foreach($warnings as $warning) {
+if(!empty($message->warnings)) {
+    foreach($message->warnings as $warning) {
         echo $OUTPUT->notification($warning);
     }
 }
