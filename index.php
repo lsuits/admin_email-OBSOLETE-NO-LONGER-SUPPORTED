@@ -1,7 +1,7 @@
 <?php
 
 // Written at Louisiana State University
-global $CFG, $USER, $SESSION, $PAGE, $SITE, $OUTPUT;
+global $CFG, $USER, $SESSION, $PAGE, $SITE, $OUTPUT, $DB;
 require_once '../../config.php';
 require_once "$CFG->dirroot/course/lib.php";
 require_once "$CFG->libdir/adminlib.php";
@@ -27,27 +27,42 @@ $PAGE->navbar->add($blockname);
 $PAGE->navbar->add($header);
 $PAGE->set_heading($SITE->shortname.': '.$blockname);
 
-// Get Oour users
+// Get Our users
 $fields = array(
-    'courserole' => 0,
-    'systemrole' => 0,
-    'realname' => 1,
-    'username' => 1,
-);
+    'realname'      => 1,
+    'lastname'      => 1,
+    'firstname'     => 1,
+    'email'         => 1,
+    'city'          => 1,
+    'country'       => 1,
+    'confirmed'     => 1,
+    'suspended'     => 1,
+    'profile'       => 1,
+    'courserole'    => 0,
+    'systemrole'    => 0,
+    'username'      => 0,
+    'cohort'        => 1,
+    'firstaccess'   => 1,
+    'lastaccess'    => 0,
+    'neveraccessed' => 1,
+    'timemodified'  => 1,
+    'nevermodified' => 1,
+    'auth'          => 1,
+    'mnethostid'    => 1,
+    );
 
-$ufiltering = new user_filtering($fields);
+$ufiltering         = new user_filtering($fields);
 list($sql, $params) = $ufiltering->get_sql_filter();
-$usercount = get_users(false); 
-$usersearchcount = get_users(false, '', true, null, '', '', '', '', '', 
+$usersearchcount    = get_users(false, '', true, null, '', '', '', '', '', 
                 '*', $sql, $params);
 
 if(empty($sort)) $sort = 'lastname';
 
-$display_users = empty($sql) ? array() :
+$display_users  = empty($sql) ? array() :
     get_users_listing($sort, $direction, $page*$perpage, 
     $perpage, '', '', '', $sql, $params);
 
-$users = empty($sql) ? array() :
+$users          = empty($sql) ? array() :
     get_users_listing($sort, $direction, 0, 
     0, '', '', '', $sql, $params);
 
@@ -59,9 +74,9 @@ if ($form->is_cancelled()) {
     redirect(new moodle_url('/blocks/admin_email/'));
 } else if ($data = $form->get_data()) {
 
-    $message = new Message($data, $users);
+    $message = new Message($data, array_keys($users));
     $message->send();
-
+    $message->sendAdminReceipt();
     // Finished processing
     // Empty errors mean that you can go back home
     if(empty($message->warnings))
