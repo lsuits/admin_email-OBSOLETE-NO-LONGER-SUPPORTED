@@ -11,3 +11,4 @@ $string['email_error'] = 'Could not email: {$a->firstname} {$a->lastname} ({$a->
 $string['email_error_field'] = 'Can not have an empty: {$a}';
 $string['block/admin_email:addinstance'] = "Add Admin Email block.";
 $string['admin_email:addinstance'] = "Add Admin Email block.";
+$string['messageprovider:broadcast'] = 'Send broadcast messages using Admin Email.';
