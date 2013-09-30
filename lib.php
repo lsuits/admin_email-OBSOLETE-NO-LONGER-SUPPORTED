@@ -27,14 +27,22 @@ class Message {
     }
     
     public function send($users = null){
-        global $USER;
+
         $this->startTime = time();
         $users = empty($users) ? $this->users : $users;
+
+        $noreplyUser                = new stdClass();
+        $noreplyUser->firstname     = 'Moodle';
+        $noreplyUser->lastname      = 'Administrator';
+        $noreplyUser->username      = 'moodleadmin';
+        $noreplyUser->email         = $this->noreply;
+        $noreplyUser->maildisplay   = 2;
+
         foreach($users as $user) {
 
             $success = email_to_user(
                     $user,          // to
-                    $USER,          // from
+                    $noreplyUser,   // from
                     $this->subject, // subj
                     $this->text,    // body in plain text
                     $this->html,    // body in HTML
